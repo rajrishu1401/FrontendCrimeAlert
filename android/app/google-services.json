@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1078053179878",
+    "project_id": "crimealert-e2391",
+    "storage_bucket": "crimealert-e2391.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1078053179878:android:ecc71dd56e138ab9d84627",
+        "android_client_info": {
+          "package_name": "com.example.crime_alert"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOhszPCD51eppK-IXM8cmrVjIwMWBewIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
