@@ -5,7 +5,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class IdInputScreen extends StatefulWidget {
-  const IdInputScreen({super.key});
+  const IdInputScreen({super.key,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
+  final double latitude;
+  final double longitude;
 
   @override
   State<IdInputScreen> createState() => _IdInputScreenState();
@@ -97,7 +102,7 @@ class _IdInputScreenState extends State<IdInputScreen> {
                       }
 
                       final response = await http.post(
-                        Uri.parse("http://10.0.2.2:8080/api/verify-id"),
+                        Uri.parse("http://10.0.2.2:9090/api/verify-id"),
                         headers: {"Content-Type": "application/json"},
                         body: jsonEncode({"idNo": Id}),
                       );
@@ -135,6 +140,10 @@ class _IdInputScreenState extends State<IdInputScreen> {
                                 dob: data['dob'],
                                 phoneNo: data['phoneNo'],
                                 otp: data['otp'],
+                                city: widget.city,
+                                state: widget.state,
+                                latitude: widget.latitude,
+                                longitude: widget.longitude,
                               ),
                             ),
                           );

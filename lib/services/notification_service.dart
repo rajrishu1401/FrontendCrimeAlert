@@ -1,28 +1,50 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:crime_alert/screens/NotificationLandingScreen.dart';
 
 class NotificationService {
   static final _fcm = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
-  static Future<void> init() async {
-    await _fcm.requestPermission();
+  static Future<void> init({required BuildContext context}) async {
+    NotificationSettings settings = await _fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
-    // Get the FCM token
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      debugPrint('❌ Notifications not authorized');
+      return;
+    }
+
+    // Log FCM Token
     String? token = await _fcm.getToken();
     debugPrint("🔐 FCM Token: $token");
 
-    // TODO: Send this token to backend to register authority device
-
-    // Initialize local notification plugin (for displaying notification)
+    // Local notifications init
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidInit);
-    await _localNotificationsPlugin.initialize(initSettings);
+    await _localNotificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const NotificationLandingScreen(),
+            ),
+          );
+        }
+      },
+    );
+  }
 
-    // Foreground message handling
-    FirebaseMessaging.onMessage.listen((message) {
+  static void setupFirebaseListeners(BuildContext context) {
+    // Foreground message
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification? notification = message.notification;
       if (notification != null) {
         _localNotificationsPlugin.show(
@@ -31,21 +53,33 @@ class NotificationService {
           notification.body,
           const NotificationDetails(
             android: AndroidNotificationDetails(
-              'channel_id',
+              'high_importance_channel',
               'High Importance Notifications',
               importance: Importance.high,
               priority: Priority.high,
               showWhen: true,
             ),
           ),
+          payload: 'default',
         );
       }
     });
-
-    // Handle app opened via notification
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint("📲 App opened via notification");
-      // Handle navigation or logic here
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NotificationLandingScreen(),
+        ),
+      );
+    });
+    // App opened via tap on notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NotificationLandingScreen(),
+        ),
+      );
     });
   }
 }

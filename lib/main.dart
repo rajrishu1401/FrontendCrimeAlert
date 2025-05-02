@@ -1,6 +1,8 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:crime_alert/screens/splashScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 var kColorScheme = ColorScheme.fromSeed(
   seedColor: const Color(0xFFD32F2F), // Emergency Red
@@ -22,10 +24,25 @@ var kDarkColorScheme = ColorScheme.fromSeed(
   onSecondary: Colors.white,
   onSurface: Colors.white,
 );
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("🔥 Background message: ${message.notification?.title}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  const AndroidInitializationSettings androidSettings =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initSettings =
+  InitializationSettings(android: androidSettings);
+
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     darkTheme: ThemeData.dark().copyWith(

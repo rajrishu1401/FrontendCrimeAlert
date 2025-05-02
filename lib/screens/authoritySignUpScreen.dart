@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:crime_alert/screens/authorityTabScreen.dart';
 import 'package:crime_alert/screens/userTypeScreen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:crime_alert/screens/loginScreen.dart';
 import 'package:crime_alert/widgets/imagePickerWidget.dart';
@@ -9,11 +10,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthoritySignUpScreen extends StatefulWidget{
-  const AuthoritySignUpScreen({super.key,required this.id,required this.name,required this.dob,required this.phoneNo});
+  const AuthoritySignUpScreen({super.key,required this.id,required this.name,required this.dob,required this.phoneNo,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
   final String id;
   final String name;
   final String dob;
   final String phoneNo;
+  final double latitude;
+  final double longitude;
   @override
   State<AuthoritySignUpScreen> createState() => _AuthoritySignUpScreenState();
 }
@@ -33,9 +39,14 @@ class _AuthoritySignUpScreenState extends State<AuthoritySignUpScreen>{
     required String password,
     required String id,
     required String dob,
-    required String phoneNo
+    required String phoneNo,
+    required String fcmToken,
+    required String city,
+    required String state,
+    required double latitude,
+    required double longitude,
   }) async {
-    const url = 'http://10.0.2.2:8080/api/register';
+    const url = 'http://10.0.2.2:9090/api/register';
 
     final body = jsonEncode({
       "name": name,
@@ -44,7 +55,12 @@ class _AuthoritySignUpScreenState extends State<AuthoritySignUpScreen>{
       "idNo": id,
       "role": "Police",
       "dob" : dob,
-      "phoneNo": phoneNo
+      "phoneNo": phoneNo,
+      "fcmToken": fcmToken,
+      "city":city,
+      "state":state,
+      "latitude":latitude,
+      "longitude":longitude
     });
 
     try {
@@ -234,6 +250,13 @@ class _AuthoritySignUpScreenState extends State<AuthoritySignUpScreen>{
                             if (!isValid) return;
 
                             _form.currentState!.save();
+                            String? fcmToken = await FirebaseMessaging.instance.getToken();
+                            if (fcmToken == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("❌ Unable to retrieve FCM token.")),
+                              );
+                              return;
+                            }
 
                             final (success, message) = await registerAuthority(
                               name: widget.name,
@@ -242,6 +265,11 @@ class _AuthoritySignUpScreenState extends State<AuthoritySignUpScreen>{
                               id: widget.id,
                               dob: widget.dob,
                               phoneNo: widget.phoneNo,
+                              fcmToken: fcmToken,
+                                city: widget.city,
+                                state: widget.state,
+                              latitude: widget.latitude,
+                              longitude: widget.longitude
                             );
 
                             if (success) {
@@ -251,7 +279,16 @@ class _AuthoritySignUpScreenState extends State<AuthoritySignUpScreen>{
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const AuthorityTabScreen(),
+                                  builder: (context) => AuthorityTabScreen(
+                                    id: widget.id,
+                                    name: widget.name,
+                                    dob: widget.dob,
+                                    phoneNo: widget.phoneNo,
+                                    state: widget.state,
+                                    city: widget.city,
+                                    latitude: widget.latitude,
+                                    longitude: widget.longitude,
+                                  ),
                                 ),
                               );
                             } else {

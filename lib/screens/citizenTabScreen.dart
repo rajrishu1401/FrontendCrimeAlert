@@ -9,7 +9,16 @@ import 'package:crime_alert/screens/citizenHistoryScreen.dart';
 import 'package:crime_alert/widgets/drawer_widget.dart';
 
 class CitizenTabScreen extends ConsumerStatefulWidget {
-  const CitizenTabScreen({super.key});
+  const CitizenTabScreen({super.key,required this.aadhaar,required this.name,required this.dob,required this.phoneNo,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
+  final String aadhaar;
+  final String name;
+  final String dob;
+  final String phoneNo;
+  final double latitude;
+  final double longitude;
 
   @override
   ConsumerState<CitizenTabScreen> createState() {
@@ -45,7 +54,14 @@ class _CitizenTabScreen extends ConsumerState<CitizenTabScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget activeScreen = const CitizenHomeScreen();
+    Widget activeScreen = CitizenHomeScreen(aadhaar: widget.aadhaar,
+      name: widget.name,
+      dob: widget.dob,
+      phoneNo: widget.phoneNo,
+      state: widget.state,
+      city: widget.city,
+      latitude: widget.latitude,
+      longitude: widget.longitude,);
     String activeTitle = 'Home';
     Widget? floatingActionButton;
     if (selectedTabIndex == 1) {

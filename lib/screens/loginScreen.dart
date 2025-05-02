@@ -5,6 +5,8 @@ import 'package:crime_alert/screens/phoneVerification.dart';
 import '../services/api_service.dart';
 import 'package:crime_alert/screens/authorityTabScreen.dart';
 import 'package:crime_alert/screens/citizenTabScreen.dart';
+import 'package:crime_alert/services/notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -131,50 +133,90 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: () async {
-                              final isValid = _form.currentState!.validate();
-                              if (!isValid) return;
+                              onPressed: () async {
+                                final isValid = _form.currentState!.validate();
+                                if (!isValid) return;
 
-                              _form.currentState!.save(); // This line is essential to trigger onSaved
+                                _form.currentState!.save();
 
-                              print("values: $_userName $_enteredPassword");
+                                print("values: $_userName $_enteredPassword");
 
-                              try {
-                                final result = await ApiService.login(_userName, _enteredPassword);
+                                try {
+                                  final result = await ApiService.login(_userName, _enteredPassword);
+                                  String role = result['data']['role'] ?? 'unknown';
 
-                                String role = result['data']['role'] ?? 'unknown';
-                                if (role == 'Citizen') {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const CitizenTabScreen()),
+                                  final settings = await FirebaseMessaging.instance.requestPermission();
+                                  print("🔒 Notification permission status: ${settings.authorizationStatus}");
+                                  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+                                    await NotificationService.init(context: context);
+                                    String? token = await FirebaseMessaging.instance.getToken();
+                                    if (token == null) {
+                                      throw Exception("Failed to retrieve FCM token. Login restricted.");
+                                    }
+                                    await ApiService.sendFcmToken(userId: _userName, token: token);
+                                  } else {
+                                    throw Exception("Notification permission not granted. Login restricted.");
+                                  }
+
+
+                                  String? token = await FirebaseMessaging.instance.getToken();
+
+                                  if (token == null) {
+                                    throw Exception("Failed to retrieve FCM token. Login restricted.");
+                                  }
+
+                                  try {
+                                    await ApiService.sendFcmToken(userId: _userName, token: token);
+                                  } catch (e) {
+                                    throw Exception("Failed to update FCM token on server. Login restricted.");
+                                  }
+
+                                  // Navigate based on role
+                                  if (role == 'Citizen') {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => CitizenTabScreen(aadhaar: result['data']['idNo'],
+                                        name: result['data']['name'],
+                                        dob: result['data']['dob'],
+                                        phoneNo: result['data']['phoneNo'],
+                                        state: result['data']['state'],
+                                        city: result['data']['city'],
+                                        latitude: result['data']['latitude'],
+                                        longitude: result['data']['longitude'],)),
+                                    );
+                                  } else if (role != 'Admin' && role != 'unknown') {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => AuthorityTabScreen(id: result['data']['idNo'],
+                                        name: result['data']['name'],
+                                        dob: result['data']['dob'],
+                                        phoneNo: result['data']['phoneNo'],
+                                        state: result['data']['state'],
+                                        city: result['data']['city'],
+                                        latitude: result['data']['latitude'],
+                                        longitude: result['data']['longitude'],)),
+                                    );
+                                  } else {
+                                    throw Exception("Unknown role. Cannot navigate.");
+                                  }
+
+                                } catch (e) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Login Failed"),
+                                      content: Text(e.toString().replaceFirst('Exception: ', '')),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("OK"),
+                                          onPressed: () => Navigator.pop(context),
+                                        )
+                                      ],
+                                    ),
                                   );
-                                } else if (role!='Admin' && role!='unknown') {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const AuthorityTabScreen()),
-                                  );
-                                } else {
-                                  throw Exception("Unknown role. Cannot navigate.");
                                 }
-
-                              } catch (e) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text("Login Failed"),
-                                    content: Text(e.toString().replaceFirst('Exception: ', '')),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text("OK"),
-                                        onPressed: () => Navigator.pop(context),
-                                      )
-                                    ],
-                                  ),
-                                );
-                              }
-                            },
-
-                            child: Padding(
+                              },
+                              child: Padding(
                               padding: const EdgeInsets.all(10.0),
                               child: Text(
                                 'Log in',

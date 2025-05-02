@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:crime_alert/widgets/buttonWidget.dart'; // Import the button widget
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:geocoding/geocoding.dart';
+
 
 class CitizenHomeScreen extends StatefulWidget {
-  const CitizenHomeScreen({super.key});
+  const CitizenHomeScreen({super.key,required this.aadhaar,required this.name,required this.dob,required this.phoneNo,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
+  final String aadhaar;
+  final String name;
+  final String dob;
+  final String phoneNo;
+  final double latitude;
+  final double longitude;
 
   @override
   State<CitizenHomeScreen> createState() => _CitizenHomeScreenState();
@@ -11,6 +25,65 @@ class CitizenHomeScreen extends StatefulWidget {
 class _CitizenHomeScreenState extends State<CitizenHomeScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _isPressed = false; // For simulating hover effect on mobile
+
+  Future<void> sendEmergencyAlert() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Location permission denied")),
+        );
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      // 📍 Get address from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      String fullAddress = 'Unknown location';
+      if (placemarks.isNotEmpty) {
+        final Placemark place = placemarks.first;
+        fullAddress = '${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}';
+      }
+
+      final url = Uri.parse('http://10.0.2.2:9090/emergency');
+
+      final payload = {
+        'name': widget.name,
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'citizenId': widget.aadhaar,
+        'description': 'Emergency.',
+        'location': fullAddress,
+      };
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("🚨 Emergency alert sent successfully!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to send emergency alert: $e")),
+      );
+    }
+  }
+
 
   @override
   void initState() {
@@ -62,9 +135,11 @@ class _CitizenHomeScreenState extends State<CitizenHomeScreen> with SingleTicker
                     onTapDown: (_) {
                       setState(() => _isPressed = true); // Button turns darker red when pressed
                     },
-                    onTapUp: (_) {
-                      setState(() => _isPressed = false); // Restore color when released
+                    onTapUp: (_) async {
+                      setState(() => _isPressed = false);
+                      await sendEmergencyAlert(); // Now it uses fresh location
                     },
+
                     onTapCancel: () {
                       setState(() => _isPressed = false); // Restore color if tap is canceled
                     },

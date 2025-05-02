@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 
 class AdharVerificationScreen extends StatefulWidget{
-  const AdharVerificationScreen({super.key,required this.aadhaar,required this.name,required this.dob,required this.phoneNo,required this.otp});
+  const AdharVerificationScreen({super.key,required this.aadhaar,required this.name,required this.dob,required this.phoneNo,required this.otp,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
   final String aadhaar;
   final String name;
   final String dob;
   final String phoneNo;
   final String otp;
+  final double latitude;
+  final double longitude;
   @override
   State<StatefulWidget> createState() {
     // TODO: implement createState
@@ -116,6 +121,10 @@ class _AdharVerificationScreenState extends State<AdharVerificationScreen> {
                             name: widget.name,
                             dob: widget.dob,
                             phoneNo: widget.phoneNo,
+                            state: widget.state,
+                            city: widget.city,
+                            latitude: widget.latitude,
+                            longitude: widget.longitude,
                           ),
                         ),
                       );
@@ -140,7 +149,8 @@ class _AdharVerificationScreenState extends State<AdharVerificationScreen> {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const AdharInputScreen()),
+                        MaterialPageRoute(builder: (context) => AdharInputScreen(state: widget.state,city: widget.city,latitude: widget.latitude,
+                          longitude: widget.longitude,)),
                       );
                     },
                     child: Text("Edit Aadhar Number?"),

@@ -4,12 +4,17 @@ import 'package:pinput/pinput.dart';
 import 'package:crime_alert/screens/idInputScreen.dart';
 
 class IdVerificationScreen extends StatefulWidget{
-  const IdVerificationScreen({super.key,required this.id,required this.name,required this.dob,required this.phoneNo,required this.otp});
+  const IdVerificationScreen({super.key,required this.id,required this.name,required this.dob,required this.phoneNo,required this.otp,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
   final String id;
   final String name;
   final String dob;
   final String phoneNo;
   final String otp;
+  final double latitude;
+  final double longitude;
   @override
   State<StatefulWidget> createState() {
     // TODO: implement createState
@@ -115,6 +120,10 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                             name: widget.name,
                             dob: widget.dob,
                             phoneNo: widget.phoneNo,
+                            state: widget.state,
+                            city: widget.city,
+                            latitude: widget.latitude,
+                            longitude: widget.longitude,
                           ),
                         ),
                       );
@@ -139,7 +148,8 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const IdInputScreen(),
+                          builder: (context) => IdInputScreen(state: widget.state,city: widget.city,latitude: widget.latitude,
+                            longitude: widget.longitude,),
                         ),
                       );
                     },

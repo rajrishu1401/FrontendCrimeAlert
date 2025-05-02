@@ -10,8 +10,11 @@ android {
     namespace = "com.example.crime_alert"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
-
+    defaultConfig {
+        multiDexEnabled = true
+    }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -40,7 +43,8 @@ android {
     }
 }
 dependencies {
-    implementation("com.google.firebase:firebase-messaging:23.4.1") // <-- Your Firebase Messaging SDK
+    implementation("com.google.firebase:firebase-messaging:23.4.1") // <-- Your Firebase Messaging SDK )
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 flutter {
     source = "../.."

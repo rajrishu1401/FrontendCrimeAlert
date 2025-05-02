@@ -9,8 +9,19 @@ import 'package:crime_alert/screens/authorityHistoryScreen.dart';
 //import 'package:krishi_unnati/provider/farmersItems_provider.dart';
 import 'package:crime_alert/widgets/drawer_widget.dart';
 
+import '../services/notification_service.dart';
+
 class AuthorityTabScreen extends ConsumerStatefulWidget {
-  const AuthorityTabScreen({super.key});
+  const AuthorityTabScreen({super.key,required this.id,required this.name,required this.dob,required this.phoneNo,required this.state,required this.city, required this.latitude,
+    required this.longitude,});
+  final String state;
+  final String city;
+  final String id;
+  final String name;
+  final String dob;
+  final String phoneNo;
+  final double latitude;
+  final double longitude;
 
   @override
   ConsumerState<AuthorityTabScreen> createState() {
@@ -19,7 +30,11 @@ class AuthorityTabScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthorityTabScreen extends ConsumerState<AuthorityTabScreen> {
-
+  @override
+  void initState() {
+    super.initState();
+    NotificationService.setupFirebaseListeners(context); // 👈 This is all you need
+  }
   void _drawerScreenChange(String screen){
     Navigator.pop(context);
     if(screen=='Profile'){
@@ -44,9 +59,17 @@ class _AuthorityTabScreen extends ConsumerState<AuthorityTabScreen> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
-    Widget activeScreen = const AuthorityHomeScreen();
+    Widget activeScreen = AuthorityHomeScreen(id: widget.id,
+      name: widget.name,
+      dob: widget.dob,
+      phoneNo: widget.phoneNo,
+      state: widget.state,
+      city: widget.city,
+      latitude: widget.latitude,
+      longitude: widget.longitude,);
     String activeTitle = 'Home';
     Widget? floatingActionButton;
     if (selectedTabIndex == 1) {
